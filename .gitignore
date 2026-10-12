@@ -1,3 +1,6 @@
+pipeline/raw/
+pipeline/work/
+
 # History files
 .Rhistory
 .Rapp.history
