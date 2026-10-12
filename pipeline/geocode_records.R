@@ -36,7 +36,7 @@ library(httr2)
 WORK_DIR   <- "pipeline/work"
 CACHE_FILE <- "pipeline/cache/section_bbox_cache.csv"
 
-IMPORT_APP_CACHE  <- "F:/OneDrive/OneDriveDocuments/R/Apps/WR_geocode/section_cache.rds" 
+IMPORT_APP_CACHE  <- NULL 
 
 RECHECK_NONE_DAYS <- 90     # re-ask BLM about "no match" sections after this many days
 PAUSE_S           <- 0.5    # polite pause between BLM requests (same as the app)
