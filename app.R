@@ -58,7 +58,7 @@ WA_MAXBNDS <- c(lng1 = -127.5, lat1 = 44.3, lng2 = -114.5, lat2 = 50.3)
 CARTO_KEY <- Sys.getenv("CARTO_API_KEY")
 message("CARTO_API_KEY ", if (nzchar(CARTO_KEY))
   paste0("found (", nchar(CARTO_KEY), " characters)") else
-  "NOT found - Light basemap will show CARTO's watermark")
+    "NOT found - Light basemap will show CARTO's watermark")
 CARTO_ATTRIB <- paste0(
   "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors, ",
   "&copy; <a href='https://carto.com/attributions'>CARTO</a>"
@@ -132,7 +132,7 @@ build_popups <- function(df, as_of) {
   )
   esc  <- function(x) if_else(is.na(x), "&mdash;", htmlEscape(x))
   qq_q <- trimws(gsub("\\s+", " ", paste(coalesce(df$qq, ""), coalesce(df$q, ""))))
-
+  
   paste0(
     "<div style='font-family:Arial;font-size:12px;min-width:240px;'>",
     "<div style='font-size:14px;font-weight:bold;margin-bottom:2px;'>",
@@ -200,7 +200,7 @@ ui <- function(request) {
   navbarPage(
     title = "Permit Events",
     header = tags$head(tags$style(HTML(app_css))),
-
+    
     # ---- Tab 1: Map ---------------------------------------------------------
     tabPanel(
       "Map",
@@ -208,11 +208,11 @@ ui <- function(request) {
           h2("WA Water Right Permit Events — Overdue vs Pending"),
           p("Open construction and proof-of-appropriation deadlines on active permits and Change-ROEs",
             HTML("&nbsp;&middot;&nbsp;"), "Data current as of ", strong(DATA_DATE_TXT))),
-
+      
       sidebarLayout(
         sidebarPanel(
           width = 3,
-
+          
           h4("As-of date"),
           sliderInput("as_of", NULL, min = SLIDER_MIN, max = SLIDER_MAX,
                       value = min(max(Sys.Date(), SLIDER_MIN), SLIDER_MAX),
@@ -224,7 +224,7 @@ ui <- function(request) {
                           choices = c("1 month" = "1 month", "3 months" = "3 months",
                                       "1 year" = "1 year"),
                           selected = "3 months")),
-
+          
           hr(),
           h4("Filters"),
           checkboxGroupInput("status_show", "Show",
@@ -239,7 +239,7 @@ ui <- function(request) {
           selectizeInput("county_sel", "County", choices = COUNTY_CHOICES, multiple = TRUE,
                          options = list(placeholder = "All counties")),
           checkboxInput("spread", "Spread stacked points (same section)", value = TRUE),
-
+          
           hr(),
           h4("Map overlays"),
           checkboxInput("show_wria",   "WRIA boundaries",       value = TRUE),
@@ -248,12 +248,12 @@ ui <- function(request) {
           helpText(style = "font-size:11px;margin-top:-6px;",
                    "BLM CadNSDI township, range & section grid.",
                    "Zoom to level 10+ for section lines to render."),
-
+          
           hr(),
           h4("Data"),
           uiOutput("data_info")
         ),
-
+        
         mainPanel(
           width = 9,
           uiOutput("stat_tiles"),
@@ -264,7 +264,7 @@ ui <- function(request) {
         )
       )
     ),
-
+    
     # ---- Tab 2: Table -------------------------------------------------------
     tabPanel(
       "Table",
@@ -274,58 +274,105 @@ ui <- function(request) {
       br(), br(),
       DTOutput("table")
     ),
-
+    
     # ---- Tab 3: About -------------------------------------------------------
+    # Text supplied by Jeff (permit timelines about.docx). Links open in a new
+    # tab; the "Data current as of" date updates automatically with each refresh.
     tabPanel(
       "About",
       fluidRow(column(
         width = 8, offset = 1,
         br(),
         h3("About this app"),
-        p("Each point is an active water right permit (or Change-ROE) with an",
-          strong("open"), "development-schedule event: Begin Construction,",
-          "Complete Construction, or Proof of Appropriation. Permits move through",
-          "these events in order, so each record has one open event at a time."),
+        
+        h4("Permit Development Schedules"),
+        p("Approved water right applications result in a water right permit. In",
+          "the case of changes to existing water rights, the decision",
+          "(“Change Report of Examination” or “Change-ROE”) approving the change",
+          "functions as the permit itself. Water rights in permit status (called",
+          "Permits or Change-ROEs) are required to meet development schedules to",
+          "ensure that a project is being completed with due diligence while",
+          "complying with permit provisions."),
+        p("Permit development schedules are essential for tracking the status of",
+          "water use and discouraging speculation."),
+        p("When the water authorized by a permit and reasonably required by the",
+          "project has been put to beneficial use, the permit holder must file a",
+          "Proof of Appropriation with the Department of Ecology. If approved,",
+          "Ecology will issue a water right certificate."),
+        p("More background on water right permit development schedules can be",
+          "found at the Department of Ecology:"),
+        tags$ul(
+          tags$li(tags$a(
+            "Water Resources Program Policy and Interpretive Statement: Development Schedules for Water Right Changes",
+            href = "https://apps.ecology.wa.gov/publications/documents/2511105.pdf",
+            target = "_blank")),
+          tags$li(tags$a(
+            "Extensions for Water Right Permits and Change Authorizations",
+            href = "https://apps.ecology.wa.gov/publications/documents/0611004.pdf",
+            target = "_blank")),
+          tags$li(tags$a(
+            "Policy 1050: Extension of Time on Permits",
+            href = "https://appswr.ecology.wa.gov/docs/WaterRights/wrwebpdf/pol1050r.pdf",
+            target = "_blank"))
+        ),
+        
+        h4("What this app shows"),
+        p("This app visualizes the status of water right permit development",
+          "schedules. Each point is an active water right permit (or Change-ROE)",
+          "with an", strong("open"), "development-schedule event: Begin",
+          "Construction, Complete Construction, or Proof of Appropriation. Permits",
+          "move through these events in order, so each record has one open event",
+          "at a time."),
+        
         h4("Overdue vs pending"),
         p("Move the slider to any date. An event is", strong("overdue"),
           "if its due date is before the slider date, and", strong("pending"),
           "if its due date is on or after it. Press", em("Play"),
           "to step forward through time."),
+        
         h4("Summary tiles"),
         p(strong("Total permit schedules"), "is the number of open milestones",
           "matching the current filters (one per permit).", strong("Percent overdue"),
           "is overdue milestones divided by that total, at the slider date."),
+        
         h4("Bar chart"),
         p("Each bar counts the open milestones whose due date falls in that year.",
           "Milestones due before the slider date are red (overdue); those due on or",
           "after it are blue (pending), so only the slider's own year is split.",
           "Future bars are simply scheduled due dates — the chart makes no",
           "prediction about which of them will eventually be missed."),
+        
         h4("Important: this is not a historical view"),
-        p("The data contains only events that were open on the data date. Sliding",
-          "backward shows when each", em("current"), "deadline lapsed — not what",
-          "the permit looked like at that time. For example, a Proof of",
-          "Appropriation due in 2030 appears as pending in 2020, even though in",
-          "2020 the permit was probably still in its construction phase."),
+        p("The data contains only events that are open on the date of data",
+          "retrieval, as indicated by the Department of Ecology's water right",
+          "tracking system. When a permit milestone is completed and acknowledged",
+          "by Ecology, the event status is changed to Closed. This app does not",
+          "show permits with only closed permit milestone dates."),
+        
         h4("Locations"),
         p("Points are placed at the PLSS section, quarter, or quarter-quarter",
           "centroid from the TRS description, so locations are approximate.",
           "Records sharing a location are spread slightly around a small ring",
           "so each can be clicked; uncheck", em("Spread stacked points"),
           "to show true centroids. Records that could not be geocoded are not shown."),
+        
         h4("Map overlays"),
         p("WRIA boundaries: WA Department of Ecology. County boundaries: US Census",
           "Bureau TIGERweb. Both were downloaded when the data were prepared.",
           "PLSS grid: drawn live from the",
           tags$a("BLM National PLSS CadNSDI service",
                  href = "https://gis.blm.gov/arcgis/rest/services/Cadastral/BLM_Natl_PLSS_CadNSDI/MapServer",
-                 target = "_blank"), "."),
+                 target = "_blank", .noWS = "after"), "."),
+        
         h4("Data source and currency"),
         p("Washington State Department of Ecology, Water Rights Tracking System",
           "(WRTS) record search exports, joined on WR Doc ID and geocoded against",
           "the BLM CadNSDI PLSS layer.", strong(paste0("Data current as of ", DATA_DATE_TXT, ".")),
           "The data are refreshed periodically by the app maintainer; events",
           "completed or newly opened after that date are not reflected."),
+        
+        h4("Questions and comments"),
+        p(tags$a("jeffjmarti@gmail.com", href = "mailto:jeffjmarti@gmail.com")),
         br()
       ))
     )
@@ -337,11 +384,11 @@ ui <- function(request) {
 # ==============================================================================
 
 server <- function(input, output, session) {
-
+  
   # --------------------------------------------------------------------------
   # Data panel in the sidebar
   # --------------------------------------------------------------------------
-
+  
   output$data_info <- renderUI({
     i <- DATA_INFO
     div(class = "data-note",
@@ -352,26 +399,26 @@ server <- function(input, output, session) {
         if (i$n_no_due > 0) tagList(i$n_no_due, " with no due date (not shown)", br()),
         "Source: WA Ecology WRTS")
   })
-
+  
   # --------------------------------------------------------------------------
   # Play / Today buttons
   # --------------------------------------------------------------------------
-
+  
   playing <- reactiveVal(FALSE)
-
+  
   observeEvent(input$play, {
     playing(!playing())
     updateActionButton(session, "play",
                        label = if (playing()) "Pause" else "Play",
                        icon  = icon(if (playing()) "pause" else "play"))
   })
-
+  
   observeEvent(input$go_today, {
     playing(FALSE)
     updateActionButton(session, "play", label = "Play", icon = icon("play"))
     updateSliderInput(session, "as_of", value = Sys.Date())
   })
-
+  
   observe({
     req(playing())
     invalidateLater(900)
@@ -386,19 +433,19 @@ server <- function(input, output, session) {
       }
     })
   })
-
+  
   # --------------------------------------------------------------------------
   # Filtering
   #   base_filtered(): attribute filters only (independent of the date)
   #   with_status():   + overdue/pending at the slider date
   #   shown():         + the Show overdue/pending checkboxes
   # --------------------------------------------------------------------------
-
+  
   as_of <- reactive({
     req(input$as_of)
     as.Date(input$as_of)
   })
-
+  
   base_filtered <- reactive({
     df <- RECORDS |> filter(event %in% input$event_show)
     if (length(input$phase_sel)  > 0) df <- df |> filter(phase  %in% input$phase_sel)
@@ -406,20 +453,20 @@ server <- function(input, output, session) {
     if (length(input$county_sel) > 0) df <- df |> filter(county %in% input$county_sel)
     df
   })
-
+  
   with_status <- reactive({
     base_filtered() |>
       mutate(status = if_else(due < as_of(), "Overdue", "Pending"))
   })
-
+  
   shown <- reactive({
     with_status() |> filter(status %in% input$status_show)
   })
-
+  
   # --------------------------------------------------------------------------
   # Stat tiles
   # --------------------------------------------------------------------------
-
+  
   output$stat_tiles <- renderUI({
     # Tiles follow the attribute filters (event, phase, WRIA, county) but NOT
     # the Show overdue/pending checkboxes, so the totals stay meaningful.
@@ -429,7 +476,7 @@ server <- function(input, output, session) {
     n_over90 <- sum(df$status == "Overdue" & as.numeric(as_of() - df$due) > 90)
     pct_over <- if (n_total > 0) sprintf("%.1f%%", 100 * n_over / n_total) else "—"
     n_next12 <- sum(df$status == "Pending" & as.numeric(df$due - as_of()) <= 365)
-
+    
     tile <- function(num, lbl, swatch = NULL) {
       div(class = "stat-tile",
           div(class = "num", if (is.numeric(num)) format(num, big.mark = ",") else num),
@@ -437,7 +484,7 @@ server <- function(input, output, session) {
     }
     dot  <- paste0("<span style='color:", COL_OVERDUE, ";'>&#9679;</span> ")
     ring <- paste0("<span style='color:", COL_PENDING, ";'>&#9675;</span> ")
-
+    
     div(class = "stat-row",
         tile(n_total,  "Total permit schedules (open milestones)"),
         tile(n_over,   paste("Overdue as of", format(as_of(), "%m/%d/%Y")), dot),
@@ -445,21 +492,21 @@ server <- function(input, output, session) {
         tile(pct_over, "Of permit schedules overdue", dot),
         tile(n_next12, "Pending, due within 12 months", ring))
   })
-
+  
   # --------------------------------------------------------------------------
   # Map — base, boundaries and PLSS drawn once; points redrawn via proxy.
   # Panes keep the stacking order fixed no matter what is redrawn:
   #   basemap (200) < PLSS grid (350) < boundaries (410) < points (420)
   # so boundary polygons never sit on top of points and block their popups.
   # --------------------------------------------------------------------------
-
+  
   output$map <- renderLeaflet({
     m <- leaflet(options = leafletOptions(preferCanvas = TRUE, minZoom = MIN_ZOOM,
                                           maxBoundsViscosity = 1.0)) |>
       addMapPane("plss",       zIndex = 350) |>
       addMapPane("boundaries", zIndex = 410) |>
       addMapPane("points",     zIndex = 420)
-
+    
     # "Light" basemap: CARTO Positron with your key; falls back to the
     # unkeyed provider (watermarked) if CARTO_API_KEY isn't set.
     m <- if (nzchar(CARTO_KEY)) {
@@ -470,7 +517,7 @@ server <- function(input, output, session) {
     } else {
       m |> addProviderTiles(providers$CartoDB.Positron, group = "Light")
     }
-
+    
     m <- m |>
       addProviderTiles(providers$Esri.WorldTopoMap, group = "Topographic") |>
       addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") |>
@@ -483,7 +530,7 @@ server <- function(input, output, session) {
         attribution = "PLSS grid: BLM National CadNSDI",
         group = "PLSS grid"
       )
-
+    
     if (!is.null(WRIA_SF)) {
       m <- m |> addPolygons(
         data = WRIA_SF, group = "WRIA boundaries",
@@ -507,7 +554,7 @@ server <- function(input, output, session) {
         options = pathOptions(pane = "boundaries")
       )
     }
-
+    
     m |>
       addLayersControl(baseGroups = c("Light", "Topographic", "Imagery"),
                        position = "topleft",
@@ -519,13 +566,13 @@ server <- function(input, output, session) {
       addControl(HTML(legend_html), position = "bottomright") |>
       addScaleBar(position = "bottomleft")
   })
-
+  
   # The map widget must exist in the browser before the proxy can change it.
   # input$map_zoom first appears once the map has drawn, so use it as a
   # one-time "map is ready" signal (zooming later does NOT redraw points).
   map_ready <- reactiveVal(FALSE)
   observeEvent(input$map_zoom, map_ready(TRUE), once = TRUE)
-
+  
   # Overlay checkboxes -> show / hide groups
   observe({
     req(map_ready())
@@ -536,7 +583,7 @@ server <- function(input, output, session) {
       toggle(input$show_county, "County boundaries") |>
       toggle(input$show_plss,   "PLSS grid")
   })
-
+  
   # WRIA filter -> outline the selected WRIA(s) and zoom to them;
   # clearing the filter zooms back out to the whole state.
   observeEvent(input$wria_sel, {
@@ -558,17 +605,17 @@ server <- function(input, output, session) {
                            WA_VIEW[["lng2"]], WA_VIEW[["lat2"]])
     }
   }, ignoreNULL = FALSE, ignoreInit = TRUE)
-
+  
   # Points
   observe({
     req(map_ready())
     df  <- shown()
     d   <- as_of()
     use_spread <- isTRUE(input$spread)
-
+    
     proxy <- leafletProxy("map") |> clearGroup("points")
     if (nrow(df) == 0) return()
-
+    
     # Draw pending first so overdue (solid) sits on top
     df <- df |> arrange(desc(status == "Pending")) |>
       mutate(
@@ -578,7 +625,7 @@ server <- function(input, output, session) {
         fill_col   = if_else(status == "Overdue", COL_OVERDUE, "#ffffff"),
         stroke_w   = if_else(status == "Overdue", 1.5, 2.5)
       )
-
+    
     proxy |>
       addCircleMarkers(
         data = df, lng = ~x, lat = ~y, group = "points",
@@ -589,7 +636,7 @@ server <- function(input, output, session) {
         options = pathOptions(pane = "points")
       )
   })
-
+  
   # --------------------------------------------------------------------------
   # Due-year bar chart
   #   One bar per year = open milestones whose DUE DATE falls in that year.
@@ -597,7 +644,7 @@ server <- function(input, output, session) {
   #   it (pending). Only the slider's own year is split. When the slider moves,
   #   bars are recoloured through plotlyProxy (no full redraw, no flicker).
   # --------------------------------------------------------------------------
-
+  
   # Counts per due year, split at date d
   bar_counts <- function(df, d, years) {
     yr <- as.integer(format(df$due, "%Y"))
@@ -607,7 +654,7 @@ server <- function(input, output, session) {
       pend = as.integer(table(factor(yr[!ov], levels = years)))
     )
   }
-
+  
   # Dotted as-of line plus labels that ride along with it
   asof_shapes <- function(d) {
     list(list(type = "line", x0 = d, x1 = d, yref = "paper", y0 = 0, y1 = 1,
@@ -623,21 +670,21 @@ server <- function(input, output, session) {
            font = list(color = "#0b0b0b", size = 11))
     )
   }
-
+  
   timeline_years <- reactiveVal(NULL)
-
+  
   output$timeline <- renderPlotly({
     df <- base_filtered()
     req(nrow(df) > 0, input$as_of)
     d0 <- isolate(as_of())
-
+    
     yrs <- seq(as.integer(format(min(df$due), "%Y")),
                as.integer(format(max(df$due), "%Y")))
     timeline_years(yrs)
     cnt   <- bar_counts(df, d0, yrs)
     x_mid <- as.Date(paste0(yrs, "-07-01"))         # bar centred mid-year
     bar_w <- 0.82 * 365.25 * 86400000               # bar width in ms (date axis)
-
+    
     plot_ly(x = x_mid) |>
       add_bars(y = cnt$over, name = "Overdue", width = bar_w,
                marker = list(color = COL_OVERDUE),
@@ -662,7 +709,7 @@ server <- function(input, output, session) {
       ) |>
       config(displayModeBar = FALSE)
   })
-
+  
   observeEvent(as_of(), {
     yrs <- timeline_years()
     req(yrs)
@@ -673,11 +720,11 @@ server <- function(input, output, session) {
       plotlyProxyInvoke("relayout", list(shapes = asof_shapes(as_of()),
                                          annotations = asof_labels(as_of())))
   }, ignoreInit = TRUE)
-
+  
   # --------------------------------------------------------------------------
   # Table + download
   # --------------------------------------------------------------------------
-
+  
   table_data <- reactive({
     shown() |>
       mutate(days = as.numeric(as_of() - due)) |>
@@ -699,7 +746,7 @@ server <- function(input, output, session) {
         lon, lat
       )
   })
-
+  
   output$table <- renderDT({
     datatable(
       table_data() |> select(-lon, -lat),
@@ -710,7 +757,7 @@ server <- function(input, output, session) {
                                                c(COL_OVERDUE, COL_PENDING)),
                   fontWeight = "bold")
   })
-
+  
   output$dl_csv <- downloadHandler(
     filename = function() {
       paste0("permit_events_asof_", format(as_of(), "%Y%m%d"),
